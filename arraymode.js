@@ -28,12 +28,10 @@ const makeRectangleAround = (target, centerPoint, width, height, bearing) => {
   return resultingFeature;
 };
 
-const createArrayFromTo = (target, start, end) => {
+const createArrayFromTo = (target, start, end, { width, height, gap }) => {
   const totalLength = turf.length(turf.lineString([start, end]));
   const bearing = turf.bearing(start, end);
 
-  const gap = 0.00066;
-  const width = 0.0019;
   const numPoints = totalLength / (width + gap);
 
   const numDrawLoop = numPoints - 1;
@@ -44,11 +42,17 @@ const createArrayFromTo = (target, start, end) => {
       bearing).geometry;
     featureIds.push(makeRectangleAround(target, coordinates,
       width,
-      0.004,
+      height,
       bearing).id);
   }
   return featureIds;
 };
+
+// measurings of created rectangles (in kilometers)
+// TODO: make configurable through UI
+const gap = 0.00066;
+const width = 0.0019;
+const height = 0.004;
 
 export default {
   onSetup() {
@@ -67,7 +71,7 @@ export default {
     if (state.state === 'chooseSecond') {
       state.secondPoint = [e.lngLat.lng, e.lngLat.lat];
       clear(this, state.featureIds);
-      state.featureIds = createArrayFromTo(this, state.firstPoint, state.secondPoint);
+      state.featureIds = createArrayFromTo(this, state.firstPoint, state.secondPoint, { width, height, gap });
     }
   },
   onClick(state, e) {
@@ -77,7 +81,7 @@ export default {
     } else if (state.state === 'chooseSecond') {
       state.secondPoint = [e.lngLat.lng, e.lngLat.lat];
       clear(this, state.featureIds);
-      state.featureIds = createArrayFromTo(this, state.firstPoint, state.secondPoint);
+      state.featureIds = createArrayFromTo(this, state.firstPoint, state.secondPoint, { width, height, gap });
       this.map.fire('draw.create', {
         features: state.featureIds.map((id) => this.getFeature(id).toGeoJSON()),
       });
